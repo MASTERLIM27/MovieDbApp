@@ -2,16 +2,19 @@ package com.example.moviedb.view.fragments;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ProgressBar;
 
 import com.example.moviedb.R;
@@ -25,7 +28,9 @@ public class NowPlayingFragment extends Fragment {
 
     private RecyclerView rv_now_playing_fragment;
     private MovieViewModel view_model;
-    private ProgressBar progressBar_now_playing_fragment;
+    private ProgressBar progressBar_now_playing_fragment, progressBar_fetch_now_playing;
+    private int page_number = 1;
+    Boolean isScrolling = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -35,12 +40,44 @@ public class NowPlayingFragment extends Fragment {
 
         rv_now_playing_fragment = view.findViewById(R.id.rv_now_playing_fragment);
         progressBar_now_playing_fragment = view.findViewById(R.id.progressBar_now_playing_fragment);
+        progressBar_fetch_now_playing = view.findViewById(R.id.progressBar_fetch_now_playing);
 
         progressBar_now_playing_fragment.setVisibility(View.VISIBLE);
         view_model = new ViewModelProvider(getActivity()).get(MovieViewModel.class);
-        view_model.getNowPlaying();
+        view_model.getNowPlaying(page_number);
         view_model.getResultNowPlaying().observe(getActivity(),showNowPlaying);
 
+
+        rv_now_playing_fragment.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
+                    isScrolling = true;
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if(dy > 0){
+                    final int visibleThreshold = 2;
+
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    int lastItem = layoutManager.findLastCompletelyVisibleItemPosition();
+                    int currentTotalCount = layoutManager.getItemCount();
+
+                    if(currentTotalCount <= lastItem + visibleThreshold){
+                        progressBar_fetch_now_playing.setVisibility(View.VISIBLE);
+                        page_number++;
+                        isScrolling = false;
+                        view_model = new ViewModelProvider(getActivity()).get(MovieViewModel.class);
+                        view_model.getNowPlaying(page_number);
+                        view_model.getResultNowPlaying().observe(getActivity(),showNowPlaying);
+                    }
+                }
+            }
+        });
 
         return view;
     }
@@ -53,6 +90,7 @@ public class NowPlayingFragment extends Fragment {
             adapter.setListNowPlaying(nowPlaying.getResults());
             rv_now_playing_fragment.setAdapter(adapter);
             progressBar_now_playing_fragment.setVisibility(View.GONE);
+            progressBar_fetch_now_playing.setVisibility(View.GONE);
 
             ItemClickSupport.addTo(rv_now_playing_fragment).setOnItemLongClickListener(new ItemClickSupport.OnItemLongClickListener() {
                 @Override

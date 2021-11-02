@@ -19,7 +19,8 @@ public interface ApiEndPoint {
 
     @GET("movie/now_playing")
     Call<NowPlaying> getNowPlaying(
-            @Query("api_key") String apiKey
+            @Query("api_key") String apiKey,
+            @Query("page") int page
     );
 
     @GET("movie/upcoming")

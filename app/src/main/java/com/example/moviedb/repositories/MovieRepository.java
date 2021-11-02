@@ -43,10 +43,30 @@ public class MovieRepository {
         return result;
     }
 
-    public MutableLiveData<NowPlaying> getNowPlayingData(){
+    public MutableLiveData<NowPlaying> getNowPlayingData(Integer page){
         final MutableLiveData<NowPlaying>result = new MutableLiveData<>();
 
-        ApiService.endPoint().getNowPlaying(Const.API_KEY).enqueue(new Callback<NowPlaying>(){
+        ApiService.endPoint().getNowPlaying(Const.API_KEY, page).enqueue(new Callback<NowPlaying>(){
+
+
+            @Override
+            public void onResponse(Call<NowPlaying> call, Response<NowPlaying> response) {
+                result.setValue(response.body());
+            }
+
+            @Override
+            public void onFailure(Call<NowPlaying> call, Throwable t) {
+
+            }
+        });
+
+        return result;
+    }
+
+    public MutableLiveData<NowPlaying> fetchNowPlayingData(Integer page){
+        final MutableLiveData<NowPlaying>result = new MutableLiveData<>();
+
+        ApiService.endPoint().getNowPlaying(Const.API_KEY, page).enqueue(new Callback<NowPlaying>(){
 
 
             @Override
